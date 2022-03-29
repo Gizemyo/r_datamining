@@ -214,4 +214,4 @@ veriseti[3, ]
 med_emp_finanservices <- median(veriseti[veriseti$Industry == "Financial Services", "Employees"], na.rm = T)
 veriseti[is.na(veriseti$Employees) & veriseti$Industry == "Financial Services", "Employees"] <- med_emp_finanservices
 
-#revenue ve growth için sektör ortalaması ile doldurabilirsin. exp rev pro. üçü de yoksa sektör medyan ortalamasından bulursun. yoksa birbirinden çıkar. Sektör geliri benzerse aritmetik ort
+#revenue ve growth için sektör ortalaması ile doldurabilirsin. exp rev pro. üçü de yoksa sektör medyan ortalamasından bulursun. yoksa birbirinden çıkar. Sektör geliri benzerse aritmetik ortalama
