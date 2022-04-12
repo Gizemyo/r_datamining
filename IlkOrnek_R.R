@@ -91,7 +91,7 @@ veriseti[!is.na(veriseti$Industry), ] #is na olmayan verilerden yeni bir veri se
 veriseti <- veriseti[complete.cases(veriseti),]  #verisetinde complete olanlarla tekrar veri oluşturuyor
 
 veriseti <- backup #sildiğimizi geri aldık
-veriseti[!is.na(veriseti$Industry), ] #is na olmayan verilerden yeni bir veri seti oluştur onları dahil etme
+veriseti[!is.na(veriseti$Industry), ] # industryde is na olmayan verilerden yeni bir veri seti oluştur onları dahil etme
 
 veriseti <- read.csv("fin500.csv", na.strings = c(""))
 head(veriseti,15) #verisetinin ilk 15 satırını göster(# bu işaret ile yorum yazabilirsin, program çalıştırmaz).
@@ -215,3 +215,35 @@ med_emp_finanservices <- median(veriseti[veriseti$Industry == "Financial Service
 veriseti[is.na(veriseti$Employees) & veriseti$Industry == "Financial Services", "Employees"] <- med_emp_finanservices
 
 #revenue ve growth için sektör ortalaması ile doldurabilirsin. exp rev pro. üçü de yoksa sektör medyan ortalamasından bulursun. yoksa birbirinden çıkar. Sektör geliri benzerse aritmetik ortalama
+
+summary(veriseti)
+summary(veriseti$Growth)
+median(veriseti[ ,"Growth"])#bunun na çıkması gerekimiyor mu neden hesapladı????
+median(veriseti[ ,"Growth"], na.rm = T)
+
+med_grow_cons <- median(veriseti[veriseti$Industry == "Construction" ,"Growth"], na.rm = T)
+
+veriseti[is.na(veriseti$Growth) & veriseti$Industry == "Construction", ]
+veriseti[is.na(veriseti$Growth) & veriseti$Industry == "Construction", "Growth"]<- med_grow_cons
+
+head(veriseti, 25)
+summary(veriseti$Revenue)
+median(veriseti[ ,"Revenue"])
+median(veriseti[ ,"Revenue"], na.rm = T)
+med_rev_cons <- median(veriseti[veriseti$Industry == "Construction" ,"Revenue"], na.rm = T)
+veriseti[is.na(veriseti$Revenue) & veriseti$Industry == "Construction", ]
+veriseti[is.na(veriseti$Revenue) & veriseti$Industry == "Construction", "Revenue"]<- med_rev_cons
+veriseti[8, ]
+veriseti[44, ]
+veriseti[42, ]
+
+veriseti[is.na(veriseti$Expenses) & !is.na(veriseti$Revenue),] # expensei na olan revenuesi na olmayan veriler
+veriseti[is.na(veriseti$Expenses) & !is.na(veriseti$Revenue),"Expenses"] <- veriseti[is.na(veriseti$Expenses) & !is.na(veriseti$Revenue),"Revenue"] - veriseti[is.na(veriseti$Expenses) & !is.na(veriseti$Revenue),"Profit"] #revenue-profit yapıp expensi bulduk
+veriseti[15, ] #bu rowun expensini yazmış mı baktık gördük
+veriseti[8, ] # baktım ama bunun profiti dolu olmadığı için expensei hesaplamamış
+veriseti[42, ] #baktım ama bunun profiti dolu olmadığı için expensei hesaplamamış
+
+#Normal Dağılım
+#caret package indirilerek devam edildi. Ben indiremiyorum
+#[ , 3:5] böyle yazarsak 3,4,5 i alır, yani c(3:5), istediğimizi de yazabiliriz > c(1,3,5)
+#  alt alta ikişer $$ içine yazdığın şeyler matematiksel formülasyon olarak görülür
