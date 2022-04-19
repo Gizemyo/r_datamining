@@ -247,3 +247,42 @@ veriseti[42, ] #baktım ama bunun profiti dolu olmadığı için expensei hesapl
 #caret package indirilerek devam edildi. Ben indiremiyorum
 #[ , 3:5] böyle yazarsak 3,4,5 i alır, yani c(3:5), istediğimizi de yazabiliriz > c(1,3,5)
 #  alt alta ikişer $$ içine yazdığın şeyler matematiksel formülasyon olarak görülür
+
+getwd()
+library(caret) #load caret package
+#Load the dataset
+data(iris)
+str(iris)
+#summarize dataset from between the 1th and 4th column
+summary(iris[,1:4])
+#calculate the pre-process parameters from the dataset
+?preProcess
+#defines what are the benefits of preProcess package
+
+preprocessParams <- preProcess(iris[,1:4], method=c("scale")) 
+
+#scale fonksiyonu her bir gözlemi o serinin standart sapmasına göre oranlar.
+
+print(preprocessParams)
+
+#transform the dataset using the parameters
+
+scaled <- predict(preprocessParams, iris[, 1:4])
+
+#summarized the transformed dataset
+summary(scaled)
+
+#calculate the pre-process parameters from the dataset
+#center fonksiyonu her bir değişkenin ortalamalarından çıkartılmış halini bize verir.
+
+preProcessparams <- preProcess(iris[, 1:4] , method=c("center","scale"))
+
+normalized <- predict(preprocessParams, iris[, 1:4])
+
+#calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris[, 1:4], method=c("YeoJohnson"))
+print(preprocessParams)
+yeojohnson <- predict(preProcessparams, iris[, 1:4])
+#summarize the transformed dataset
+
+summary(yeojohnson)
