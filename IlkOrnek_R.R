@@ -286,3 +286,43 @@ yeojohnson <- predict(preProcessparams, iris[, 1:4])
 #summarize the transformed dataset
 
 summary(yeojohnson)
+
+# resampling yapacağız
+library(caret) #load caret package
+data(iris) #Load the dataset
+train_control <- trainControl(method="boot", number = 100) # Boolstrap yöntemi ile 100 örneklem oluştur.
+
+#load the libraries
+library(caret)
+# load the iris dataset
+data(iris)
+# define an 80%/20% train/test split of the dataset
+split=0.80
+trainIndex <- createDataPartition(iris$Species, p=split, list=FALSE)
+data_train <- iris[trainIndex,]#80e 20 böldü bu 80lik kısım. 5 fold olmuş yani. en uygun test datası nerden onu hesaplamaya çalışıyor. Veriyi her taraftan inceliyor
+data_test <- iris[-trainIndex,] #başına eksi koyunca onun dışındakileri getiriyor. [2, ] [-2, ] aynı mantık. Bu 20lik kısım o yüzden
+
+
+# Leave One Out Cross Validation (LOOCV)
+library(caret)
+#load the iris dataset
+data(iris)
+#define training control
+train_control <- trainControl(method="LOOCV")
+
+#k-Fold Cross Validation
+
+#load the library
+library(caret)
+#load the iris dataset
+data(iris)
+#define training control
+#k fold number => number
+train_control <- trainControl(method="cv", number=10)
+
+#Repeated Cross Validation
+
+library(caret)
+#load the iris dataset
+data(iris)
+train_control <- trainControl(method="repeatedcv", number=10, repeats=3)
