@@ -326,3 +326,118 @@ library(caret)
 #load the iris dataset
 data(iris)
 train_control <- trainControl(method="repeatedcv", number=10, repeats=3)
+library(caret)
+data(iris)
+str(iris)
+summary(iris[,1:4]) #tüm satırların ve 1 ve 4 arasındakileri aldık C(1,3,5) 1. 3. ve 5. sütunları aldık
+#calculate fotoğraf çektim bak
+preProcessParams <- preProcess(iris[,1:4], method=c("scale")) #preProcess altındaki scale'i çağırdık, herbir gözlemi oraki 
+#standart sapmaya oranlıyor. $$ $$ arasına matematik yani latex kodları yazılır. 
+print(preProcessParams)
+
+#herbir değeri standart sapmaya oranlayarak buluyor
+scaled <- predict(preProcessParams, iris[,1:4]) #predict fonskiyonunu iris 1:4 e yaz dedik
+summary(scaled)
+
+preProcessParams <- preProcess(iris[,1:4], method=c("center")) #xi-xmü yapıyor
+print(preProcessParams)
+
+centered <-  predict(preProcessParams, iris[,1:4])
+summary(centered)
+
+preProcessParams <- preProcess(iris[,1:4], method=c("center", "scale")) #standardizasyon yaptık
+print(preProcessParams)
+
+standardized <- predict(preProcessParams, iris[,1:4])
+summary(standardized)
+
+preProcessParams <- preProcess(iris[,1:4], method=c("range")) #normalizasyon yaptık formuülleri yaz
+print(preProcessParams)
+
+normalized <- predict(preProcessParams, iris[,1:4])
+summary(normalized)
+
+preProcessParams <- preProcess(iris[,1:4], method=c("BoxCox"))
+print(preProcessParams)
+
+boxcox <- predict(preProcessParams, iris[,1:4])
+summary(boxcox)
+
+preProcessParams <- preProcess(iris[,1:4], method=c("YeoJohnson"))
+print(preProcessParams)
+
+yeojohnson <- predict(preProcessParams, iris[,1:4])
+summary(yeojohnson)
+getwd()
+library(caret) #load caret package
+#Load the dataset
+data(iris)
+str(iris)
+#summarize dataset from between the 1th and 4th column
+summary(iris[,1:4])
+#calculate the pre-process parameters from the dataset
+?preProcess
+#defines what are the benefits of preProcess package
+
+preprocessParams <- preProcess(iris[,1:4], method=c("scale")) 
+
+#scale fonksiyonu her bir gözlemi o serinin standart sapmasına göre oranlar.
+
+print(preprocessParams)
+
+#transform the dataset using the parameters
+
+scaled <- predict(preprocessParams, iris[, 1:4])
+
+#summarized the transformed dataset
+summary(scaled)
+
+#calculate the pre-process parameters from the dataset
+#center fonksiyonu her bir değişkenin ortalamalarından çıkartılmış halini bize verir.
+
+preProcessparams <- preProcess(iris[, 1:4] , method=c("center","scale"))
+
+normalized <- predict(preprocessParams, iris[, 1:4])
+
+#calculate the pre-process parameters from the dataset
+preprocessParams <- preProcess(iris[, 1:4], method=c("YeoJohnson"))
+print(preprocessParams)
+yeojohnson <- predict(preProcessparams, iris[, 1:4])
+#summarize the transformed dataset
+
+summary(yeojohnson)
+
+# resampling yapacağız
+library(caret) #load caret package
+data(iris) #Load the dataset
+train_control <- trainControl(method="boot", number = 100) # Boolstrap yöntemi ile 100 örneklem oluştur.
+
+#load the libraries
+library(caret)
+# load the iris dataset
+data(iris)
+# define an 80%/20% train/test split of the dataset
+split=0.80
+trainIndex <- createDataPartition(iris$Species, p=split, list=FALSE)
+data_train <- iris[trainIndex,]#80e 20 böldü bu 80lik kısım. 5 fold olmuş yani. en uygun test datası nerden onu hesaplamaya çalışıyor. Veriyi her taraftan inceliyor
+data_test <- iris[-trainIndex,] #başına eksi koyunca onun dışındakileri getiriyor. [2, ] [-2, ] aynı mantık. Bu 20lik kısım o yüzden
+
+
+# Leave One Out Cross Validation (LOOCV)
+library(caret)
+#load the iris dataset
+data(iris)
+#define training control
+train_control <- trainControl(method="LOOCV")
+
+#k-Fold Cross Validation
+
+#load the library
+library(caret)
+#load the iris dataset
+data(iris)
+#define training control
+#k fold number => number
+train_control <- trainControl(method="cv", number=10)
+
+#Repeated Cross Validation
