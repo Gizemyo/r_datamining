@@ -83,3 +83,139 @@ alttaki scale formülü
 $$  
 \frac{X{i}}{\sigma{x}}
 $$
+Yeni veri seti ile çalışmaya başladık
+Matematiksel işlemler ile çalışacağımızdan dolayı `caret` paketini yükledik. Daha sonra R'da yerleşik veri kümesi olan `iris` veri kümesini çağırdık ve `iris` veri kümesinin yapısını ve özetini ortaya koyduk.
+```{r}
+library(caret)
+data(iris)
+str(iris)
+```
+#verisetindeki tüm satırlar ile 1. ve 4. sütunlar arasını aldık. Eğer 1. 3. ve 5. sütunları almak isteseydik C(1,3,5) komutunu uygulamamız gerekecekti.
+```{r}
+summary(iris[,1:4])
+```
+Verisetimizde uygulayacağımız dönüşümler (matematiksel işlemler) için `preProcess` komutunu kullandık ve `preProcess` altındaki `scale` paketini çağırdık. Scale fonksiyonu her bir gözlemi o serinin standart sapmasına göre oranlamaktadır.
+```{r}
+preProcessParams <- preProcess(iris[,1:4], method=c("scale"))
+print(preProcessParams)
+```
+$$
+\frac{x_(i)}{\sigma_(x)}
+$$
+İşlemleri belirli veri kümelerine uygulamak için `predict` komutunu kullandık. Sonrasında veri setini görmek için summary fonksiyonu kullandık.
+```{r}
+scaled <- predict(preProcessParams, iris[,1:4]) #predict fonksiyonunu dönüştürerek iris 1:4 e yazdırdık.
+summary(scaled)
+```
+`preProcess` altındaki `scale` paketini çağırdık ve dönüşüm yaparak yazdırdık. Center fonksiyonu her bir değişkenin ortalamalarından çıkartılmış halini vermektedir.
+
+```{r}
+preProcessParams <- preProcess(iris[,1:4], method=c("center")) #xi-xmü yaptık
+print(preProcessParams)
+
+centered <-  predict(preProcessParams, iris[,1:4])
+summary(centered)
+```
+$$
+x_{i}-\bar{X}_{x}
+$$
+Standardizasyon uygulayabilmek için;
+```{r}
+preProcessParams <- preProcess(iris[,1:4], method=c("center", "scale"))
+print(preProcessParams)
+
+standardized <- predict(preProcessParams, iris[,1:4])
+summary(standardized)
+```
+$$
+\frac{x_{i}-\mu{x}}{\sigma_{x}}
+$$
+
+Normalizasyon uygulayabilmek için;
+
+```{r}
+preProcessParams <- preProcess(iris[,1:4], method=c("range")) 
+print(preProcessParams)
+normalized <- predict(preProcessParams, iris[,1:4])
+summary(normalized)
+```
+
+$$
+\frac{x-min\left(x \right )}{max\left(x \right )-min\left(x \right )}
+$$
+`boxcox` dönüşümü, normal olarak dağıtılmamış bir veri kümesini daha normal dağılmış bir veri kümesine dönüştürmek için yaygın olarak kullanılan bir yöntemdir. `boxcox` uygulayabilmek için;
+```{r}
+preProcessParams <- preProcess(iris[,1:4], method=c("BoxCox"))
+print(preProcessParams)
+
+boxcox <- predict(preProcessParams, iris[,1:4])
+summary(boxcox)
+```
+
+$$
+y\left( \lambda \right )=\left\{\begin{matrix}\frac{y^ \lambda -1 }{\lambda}, & if \lambda\neq 0\\ log\left (y  \right ), & if \lambda = 0 \end{matrix}\right.
+$$
+
+`Yeo-Johnson` dönüşümü, normalleştirme dönüşümünü hesaplar. `yeojohnson` uygulabilmek için;
+
+```{r}
+preProcessParams <- preProcess(iris[,1:4], method=c("YeoJohnson"))
+print(preProcessParams)
+
+yeojohnson <- predict(preProcessParams, iris[,1:4])
+summary(yeojohnson)
+```
+$$
+\psi \left( \lambda, y \right )=
+
+\left\{\begin{matrix}
+
+({(\lambda +1)^\lambda -1)/\lambda}, & if \lambda\neq 0, y\geq 0\\
+
+log\left (y+1  \right ), & if \lambda = 0, y\geq 0 \\ 
+
+-[(-y+1)^{2-\lambda }-1)]/(2-\lambda), & if \lambda \neq  2, y< 0 \\ 
+
+-log\left (-y+1  \right ), & if \lambda = 2, y< 0\end{matrix}\right.
+$$
+Resampling yani yeniden örnekleme yapacağız. Bunun için Caret Package yükledik ve verimizi çağırdık.
+```{r}
+library(caret) #load caret package
+data(iris) #Load the dataset
+```
+Bunun için Boolstrap yöntemi kullandık ve verilerden yeniden 100 verilik örneklem oluştuduk.
+```{r}
+train_control <- trainControl(method="boot", number = 100)
+```
+Veri setinde %80/%20 eğitim/test bölünmesini tanımladık
+```{r}
+split=0.80
+trainIndex <- createDataPartition(iris$Species, p=split, list=FALSE)
+```
+80/20 olarak böldüğümüz verinin 80lik kısımını yani eğitim datasını çağırdık. 5 fold oluştuğunu gördük.  Veriyi her taraftan inceleyerek en uygun test datası nerden elde edilir onu hesaplamaya çalıştık.
+```{r}
+data_train <- iris[trainIndex,]
+```
+20'lik kısmı görmek için ise formülde başına eksi koyduk. 
+```{r}
+data_test <- iris[-trainIndex,]
+```
+Çapraz doğrulama yaptık. One Out modelini seçtik. Bu bir model doğrulama tekniğidir. Eğittiğimiz modelin amacı doğrultusunda ne kadar düzgün şekilde ilerlediğini, hatalar olup olmadığını, kontrol etmek için kullanılır. Eğitim kontrolünü tanımlattık..
+```{r}
+# Leave One Out Cross Validation (LOOCV)
+library(caret)
+#load the iris dataset
+data(iris)
+#define training control
+train_control <- trainControl(method="LOOCV")
+```
+
+Ayrıca bir de K-Fold Cross Validation uyguladık. Bu yöntem de sınıflandırma modellerinin değerlendirilmesi ve modelin eğitilmesi için veri setini parçalara ayırma yöntemlerinden biridir. Burada 10 fold oluşturduk.
+```{r}
+#load the library
+library(caret)
+#load the iris dataset
+data(iris)
+#define training control
+#k fold number => number
+train_control <- trainControl(method="cv", number=10)
