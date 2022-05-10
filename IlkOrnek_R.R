@@ -518,3 +518,50 @@ data(iris)
 train_control <- trainControl(method="cv", number=10)
 
 #Repeated Cross Validation
+
+#Lineer Regression
+
+head(cars) #regresyonu rdaki cars paketi üserinden uygulamak için veriyi çağırdık
+str(cars)
+summary(cars)
+names(cars) #kolon isimlerine bakmak için kullandık. Verş setindeki headerlaarı gösteriyor
+
+scatter.smooth(x=cars$speed, y=cars$dist, main="Saçılma Diyagramı")   #saçılma diyagramını çizdirdik. Veriler regresyon modeline uygun mu bakmak için.
+cor(cars$speed, cars$dist) #korelasyona baktık değişkenler arasındaki
+
+GenelModel <- lm(dist ~ speed, data=cars) #build linear regression model on data. Dist bağımlı speed bağımsız
+print(GenelModel) #yazdırdık
+summary(GenelModel) #özetine baktık
+
+AIC(GenelModel) #akaike bilgi kriteri değerine baktık. Küçük olması beklenir.
+BIC(GenelModel) #biass information criteria değerine baktık. Küçük olması beklenir
+
+#makine öğrenmesi
+
+set.seed(100)  #setting seed to reproduce results of random sampling. Aynı rassal sayıları bulmak için 100 yazdık
+trainingRowIndex <- sample(1:nrow(cars), 0.8*nrow(cars)) # index değerleri ürettik verinin %80i ile. 1den nrowa kadar. Sample fonksiyonu çalıştırdık
+trainingData <- cars[trainingRowIndex, ] #model training data oluşturduk
+View(trainingData)
+testData <- cars[-trainingRowIndex, ] #model test data oluşturduk başına - koyarak
+View(testData)
+lmMod <- lm(dist ~ speed, data=trainingData)   #train data üzerinden model kurduk. dist bağımlı speed bağımsız
+distPred <- predict(lmMod, testData) #lmmod fonksiyonu kullanarak test datasındaki speedleri koyup distance'i predict edicek
+print(distPred)
+summary(lmMod) #özetine baktık ama çok anlamlı değil
+AIC(lmMod) #akaike değerine baktık
+
+
+actuals_preds <- data.frame(cbind(gercek=testData$dist, tahmin=distPred)) #gerçekleşen ve tahmin ettiğimiz dataları bind ettik. yani görebilmek içn yanyana yazdırdık.
+correlation_accuracy <- cor(actuals_preds) #gerçekleşen ile tahminlerin korelasyonuna baktık. yüzde kaç örütüşüyor?
+print(correlation_accuracy) #burda da korelasyonu görmek için print ettik
+head(actuals_preds)
+
+#min_max_accuracy <- mean(apply(actuals_preds), 1, min) / apply(actuals_preds, 1, max)) 
+mape <- mean(abs((actuals_preds$tahmin - actuals_preds$gercek))/actuals_preds$gercek) # mape mean absolute percentage error demek. Ortalam yüzde hatayı hesaplattık. Model %50 hata yapmış
+print(mape) #%50 hata yaptığını buradan gördük
+
+#makine öğrenmesi asıl burada başlıyor
+
+library(DAAG) # bu paketi yükledik
+cvResults <- suppressWarnings(CVlm(cars, form.lm = dist ~speed, m=5, dots = FALSE, seed=29, legend.pos ="topleft", printit = FALSE, main="CV Dogrusal Regresyon")); #CVlm DAAG paketinden geliyor. form dediği linear modeln formülasyonu, m ,se oluşturacağı küme sayısı
+attr(cvResults, 'ms') # MSE mean squarred error
