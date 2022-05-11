@@ -219,3 +219,76 @@ data(iris)
 #define training control
 #k fold number => number
 train_control <- trainControl(method="cv", number=10)
+```
+Lineer regresyon uygulaması yapmaya başladık. Regresyonu R programında tanımlı 'cars' paketi üzerinden uygulamak için veriyi çağırdık ve veriyi inceledik.
+```{r}
+head(cars)
+str(cars)
+summary(cars)
+```
+Verideki kolon isimlerine bakmak için 'names' fonksiyonunu kullandık. Bu fonksiyon Veri setindeki 'header'ları gösterir.
+```{r}
+names(cars)
+```
+Verilerin regresyon modeli kurmaya uygun olup olmadığını kontrol etmek için saçılma diyagramı çizdirdik. Aynı şekilde bu amaçla değişkenler arasındaki korelasyona baktık.
+```{r}
+scatter.smooth(x=cars$speed, y=cars$dist, main="Saçılma Diyagramı")
+cor(cars$speed, cars$dist)
+```
+Veri üzerinde lm fonksiyonu ile lineer regresyon modeli kurduk. Bu modelde distance bağımlı değişkenken speed bağımsız değişken olarak yer aldı. Daha sonra bu modeli yazdırdık ve özetine baktık.
+```{r}
+GenelModel <- lm(dist ~ speed, data=cars)
+print(GenelModel)
+summary(GenelModel)
+```
+Akaike Bilgi Kriteri ve Bayesian Bilgi Kriteri değerine baktık.AIC herhangi bir tahmini istatistiksel modelin uygunluğunun bir ölçüsü olarak adlandırılmaktadır.BIC ise farklı parametre sayılarına sahip parametrik modeller sınıfı arasında bir model seçimi türüdür. Bu iki değerin de küçük olması istenmektedir.
+
+```{r}
+AIC(GenelModel)
+BIC(GenelModel)
+```
+Makine öğrenmesi bu bölüm ve sonrasında uygulanmıştır. Rastgele örnekleme sonuçlarını çoğaltmak için seed(tohum) ayarladık. Hepimiz aynı rassal sayıları bulmak için değer olarak 100 yazdık. Daha sonra verilerin %80'i ile 1'den n'e kadar index değerleri ürettik.
+```{r}
+set.seed(100)
+trainingRowIndex <- sample(1:nrow(cars), 0.8*nrow(cars))
+```
+Veri setini bölerek eğitim ve test verisi olarak parçaladık. Model eğitim verisini ve test verisini oluşturduk. Test verisi oluşturuken formülasyonda başa '-' işareti ekledik.
+```{r}
+trainingData <- cars[trainingRowIndex, ] 
+View(trainingData)
+testData <- cars[-trainingRowIndex, ] 
+View(testData)
+```
+Eğitim verisi üzerinden yeniden model kurduk. Modelde distance bağımlı değişken, speed bağımsız değişken olarak yer aldı.
+lmmod fonksiyonunu kullandık. Bu fonksiyonu kullanarak model test verisindeki 'speed' değişkenlerini modele koyarak 'distance' değişkenlerini tahmnin etmekte. Bu tahmin edilen verileri distPred olarak adlandırdık.
+Oluşan verilerin özetine baktık ancak çok anlamlı olmadığını gördük. Ardından yine Akaike Bilgi Kriteri değerini kontrol ettik. Değerin biraz kötülerştiğini gördük.
+```{r}
+lmMod <- lm(dist ~ speed, data=trainingData)
+distPred <- predict(lmMod, testData)
+print(distPred)
+summary(lmMod)
+AIC(lmMod)
+```
+Gerçekleşen verileri ve model ile tahmin edilen verileri net görebilmek için yanyana yazdırdık.
+Gerçekleşen veriler ile tahmin edilen verilerin ne kadar örtüştüğünü görmek amacıyla korelasyonlarına baktık.
+```{r}
+actuals_preds <- data.frame(cbind(gercek=testData$dist, tahmin=distPred))
+correlation_accuracy <- cor(actuals_preds)
+print(correlation_accuracy)
+head(actuals_preds)
+```
+#min_max_accuracy <- mean(apply(actuals_preds), 1, min) / apply(actuals_preds, 1, max)) 
+MAPE yani mean absolute percentage error değerine baktık. Bu değer ortalama hata bir makine öğrenmesi modelinin öngördüğü tahmin değerleri ile gerçek değerlerin arasındaki ortalama hatadır.
+Yazdırarak modelin %50 hata yapmış olduğunu gördük
+```{r}
+mape <- mean(abs((actuals_preds$tahmin - actuals_preds$gercek))/actuals_preds$gercek)
+print(mape)
+```
+Modelde makine öğrenmesi kısmı asıl burada başladı.
+Bunun için kütüphanden DAAG paketini yükledik.
+CVlm (cross validation lm) fonksiyonu DAAG paketi yüklenince gelmektedir. Burada form formülasyonu linear modeln formülasyonunu, m ise modelin oluşturmasını istediğimiz küme sayısını belirtmektedir. Burada  yazarak Veri setini 5 parçaya böldürmüş ve 5 ayrı regresyon modeli oluşturmuş olduk. Bu 5 parça içerisinde test verisi sürekli değişti. Bu sayede makine öğrenmesi yapmış olduk.
+Daha sonra MSE yani mean squarred error (ortalama hata karesi) değerine baktık.Bu hata bir tahmincinin ortalama karesi alınmış hatası veya ortalama karesi alınmış sapma, hataların karelerinin ortalamasını, yani tahmin edilen değerler ile gerçek değer arasındaki ortalama karesi alınmış farkı ölçmektedir.
+```{r}
+library(DAAG)
+cvResults <- suppressWarnings(CVlm(cars, form.lm = dist ~speed, m=5, dots = FALSE, seed=29, legend.pos ="topleft", printit = FALSE, main="CV Dogrusal Regresyon"));
+attr(cvResults, 'ms')
