@@ -563,5 +563,34 @@ print(mape) #%50 hata yaptığını buradan gördük
 #makine öğrenmesi asıl burada başlıyor
 
 library(DAAG) # bu paketi yükledik
-cvResults <- suppressWarnings(CVlm(cars, form.lm = dist ~speed, m=5, dots = FALSE, seed=29, legend.pos ="topleft", printit = FALSE, main="CV Dogrusal Regresyon")); #CVlm DAAG paketinden geliyor. form dediği linear modeln formülasyonu, m ,se oluşturacağı küme sayısı
+cvResults <- suppressWarnings(CVlm(cars, form.lm = dist ~speed, m=5, dots = FALSE, seed=29, legend.pos ="topleft", printit = FALSE, main="CV Dogrusal Regresyon")); #CVlm fonksiyonu DAAG paketinden geliyor. Cross validation lm oldu. form dediği linear modeln formülasyonu, m ,se oluşturacağı küme sayısı. 5 ayrı regresyon modeli oluşturmuş olduk. Veri setini 5 parçaya böldü.Bu 5li içerisinden test datayı sürekli değiştirerek yaptı.Makine öğrenmesi yapmış olduk
 attr(cvResults, 'ms') # MSE mean squarred error
+
+library(tidyverse)
+library(caret)
+library(glmnet)
+data(Boston, package = "MASS")
+# Yukarıdaki kullanacağımız paketleri intall ettik
+#rassallık ile test ve train dataları oluşturacağız o yüzden set.seed kullandık ilk seed ayarladık.Herkeste aynı değer yazzın diye rastlege 1212 yazdı herkes. Sonra test ve eğitim datası oluşturduk.
+set.seed(1221)
+sample_size <- floor(0.75 * nrow(Boston)) #bu değerin yüzde 75ini alınca küsüratlı çıkıyor önden hesapladık o yüzden floor fonksiyonu ile yuvarladık tam sayı olsun diye
+training_index <- sample(seq_len(nrow(Boston)), size =sample_size)
+train <- Boston[training_index, ]
+test <- Boston[-training_index, ]
+
+#predictor
+x <- model.matrix(medv~., train)[,-1] #median value bağımlı diğerleri bağımsız, -1 ile med value değerlerini çıkarıyor. bağımsızlar yerine nokta koyp hepsini almış oluyoruz.
+#response
+y <- train$medv
+
+#Ridge Regression
+
+cv.r <- cv.glmnet(x, y, alpha = 0) #bağımlı değişken x, bağımsız y, alfa 0
+cv.r$lambda.min #lambda min değerini bulduk cross validation ile
+model.ridge <- glmnet(x, y, alpha = 0, lambda = cv.r$lambda.min) #sonra o lamdayı girdi oarak kullandık. lamdayı fonksiyona elle yazmış olduk
+coef(model.ridge) #coefficientlere baktık
+
+x.test.ridge <- model.matrix(medv ~., test)[,-1]
+predictions.ridge <- model.ridge %>% predict(x.test.ridge) %>% as.vector()  #model ridgeyi çekti, sonra burdan predict değerleri oluşturdu ve vektör olrak kullandı)
+#tamin değereri model verileri ile uyuşuyor mu bakmak için rmse kullancdaz.
+data.frame( RMSE.r = RMSE(predictions.ridge, test$medv), Rsquare.r = R2(predictions.ridge, test$medv))
