@@ -292,3 +292,96 @@ Daha sonra MSE yani mean squarred error (ortalama hata karesi) değerine baktık
 library(DAAG)
 cvResults <- suppressWarnings(CVlm(cars, form.lm = dist ~speed, m=5, dots = FALSE, seed=29, legend.pos ="topleft", printit = FALSE, main="CV Dogrusal Regresyon"));
 attr(cvResults, 'ms')
+```
+Ridge Regresyon, Lasso Regresyon ve Elastic Net Regressyon uygulaması yapıldı. Bunun için öncelikle kullanılacak tidyverse, caret, glmnet ve MASS paketleri indirildi ve çağırıldı. Uygulamada kullanılacak Boston veri seti çağırıldı.
+```{r}
+library(tidyverse)
+library(caret)
+library(glmnet)
+data(Boston, package = "MASS")
+```
+Rastgelelik içeren işlemlerde herkesin aynı sonucu bulabilmesi için set.seed fonksiyonu kullanıldı.Test ve eğitim verileri rastsallık ile oluşturuldu. Bu aşamada örneklemin %75'i alındığında küsüratlı bir rakam çıktığından floor fonksiyonu kullanılarak tam sayı olması için yuvarlama yapıldı. Bu noktada vektör kullanarak dizinler oluşturmak için seq_len fonksiyonu kullanıldı. Ardından eğitim datası ve sonrasında - koyularak test datası oluşturuldu.
+```{r}
+set.seed(1212)
+sample_size <- floor(0.75 * nrow(Boston))
+training_index <- sample(seq_len(nrow(Boston)), size =sample_size)
+train <- Boston[training_index, ]
+test <- Boston[-training_index, ]
+```
+model.matrix fonksiyonu kullanılarak bir model matrisi oluşturuldu. Belirtilen formül ve verilerle regresyon benzeri bir model için bir model tasarım matrisi yapılmış oldu. Bunu yaparken median value bağımlı değişken diğerleri ise  bağımsız değişken olarak alındı. Bağımsız değişkenler yerine "." koyarak hepsi alınmış olundu.
+```{r}
+x <- model.matrix(medv~., train)[,-1]
+y <- train$medv
+```
+Ridge Regression uygulaması yapıldı. Bu regresyon modelinin amacı hata kareler toplamını minimize eden katsayıları, bu katsayılara bir ceza uygulayarak bulmaktır ve formülü aşağıda yer almaktadır.
+$$
+\begin{equation*} \sum_{i=1}^n (y_i - \sum_{j=1}^p x_{ij}\beta_j)^2 + \lambda \sum_{j=1}^p \beta_j^2 \end{equation*}
+$$
+cv.glmnet fonksiyonu kullanıldı. Bu İşlev glmnet için k-fold çapraz doğrulama yapar , bir çizim oluşturur ve lambda için bir değer döndürür. Burada x bağımlı değişken, y bağımsız değişken olarak alındı ve alfa=0 olarak girildi.Alfa=0 ridge regresyon olduğu için kullanılmaktadır.
+```{r}
+cv.r <- cv.glmnet(x, y, alpha = 0)
+```
+Cross validation fonksiyonu ile lambda'nın minimum değeri bulundu. Sonrasında bulunan bu min lambda değeri fonksiyona elle yazıldı ve girdi olarak kullanıldı.
+```{r}
+cv.r$lambda.min 
+model.ridge <- glmnet(x, y, alpha = 0, lambda = cv.r$lambda.min)
+```
+Modelin coefficient değerlerine yani katsayılarına bakıldı.
+```{r}
+coef(model.ridge) 
+```
+Belirtilen formül ve verilerle regresyon benzeri bir model için tasarım matris oluşturuldu. Bunun için test datası kullanıldı. Model predict değerleri oluşturdu ve bulduklarını vektör olarak kullandı.
+```{r}
+x.test.ridge <- model.matrix(medv ~., test)[,-1]
+predictions.ridge <- model.ridge %>% predict(x.test.ridge) %>% as.vector() 
+```
+Bu şekilde oluşturulan tahmin değereri model verileri ile uyuşuyor mu diye kontrol edilmesi için RMSE fonksiyonu kullanıldı.
+```{r}
+data.frame( RMSE.r = RMSE(predictions.ridge, test$medv), Rsquare.r = R2(predictions.ridge, test$medv))
+```
+Lasso Regression uygulaması yapıldı. Bu model Ürettiği modelin tahmin doğruluğunu ve yorumlanabilirliğini arttırmak için hem değişken seçimi hem de regularization yapmaktadır. Aynı ridge regresyonda olduğu gibi amaç hata kareler toplamını minimize eden katsayıları, katsayılara ceza uygularayarak bulmaktır. Fakat ridge regresyondan farklı olarak ilgisiz değişkenlerin katsayılarını sıfıra eşitlemektedir.Ridge regresyondan farkının ormülü aşağıda yer almaktadır.
+$$
+\begin{equation*} \textrm{Lasso subject to:} \sum_{j=1}^p |\beta_j| < c. \end{equation*}
+$$
+cv.glmnet fonksiyonu kullanıldı. Bu İşlev glmnet için k-fold çapraz doğrulama yapar , bir çizim oluşturur ve lambda için bir değer döndürür. Burada x bağımlı değişken, y bağımsız değişken olarak alındı ve alfa=1 olarak girildi.Alfa=1 ridge resgreyondan farklı olarak lasso regresyon için kullanılmaktadır.
+```{r}
+cv.l <- cv.glmnet(x, y, alpha = 1)
+```
+Cross validation fonksiyonu ile lambda'nın minimum değeri bulundu. Sonrasında bulunan bu min lambda değeri fonksiyona elle yazıldı ve girdi olarak kullanıldı.
+```{r}
+cv.l$lambda.min
+model.lasso <- glmnet(x, y, alpha = 1 , lambda = cv.l$lambda.min)
+```
+Modelin coefficient değerlerine yani katsayılarına bakıldı.
+```{r}
+coef(model.lasso)
+```
+Belirtilen formül ve verilerle regresyon benzeri bir model için tasarım matris oluşturuldu. Bunun için test datası kullanıldı. Model predict değerleri oluşturdu ve bulduklarını vektör olarak kullandı.
+```{r}
+x.test.lasso <- model.matrix(medv ~., test)[,-1] 
+predictions.lasso <- model.lasso %>% predict(x.test.lasso) %>% as.vector()
+```
+Bu şekilde oluşturulan tahmin değereri model verileri ile uyuşuyor mu diye kontrol edilmesi için RMSE fonksiyonu kullanıldı.
+```{r}
+data.frame( RMSE.r = RMSE(predictions.lasso, test$medv), Rsquare.r = R2(predictions.lasso, test$medv))
+```
+Son olarak Elastik Net uygulaması yapıldı. Elastik Net Regresyonu, Lasso ve Ridge Regresyonlarının güçlü yönlerini birleştirerek, düzenlileştirilmiş değişkenlerle ilişkili parametreleri gruplandırıp küçülterek onları denklemde bırakmakta veya hepsini bir kerede kaldırmaktadır. 
+```{r}
+model.net <- train(
+  medv ~., data = train, method = "glmnet",
+  trControl = trainControl("cv", number = 10),
+  tuneLenght = 10)
+model.net$bestTune
+```
+Modelin coefficient değerlerine yani katsayılarına bakıldı.
+```{r}
+coef(model.net$finalModel, model.net$bestTune$lambda)
+```
+Belirtilen formül ve verilerle regresyon benzeri bir model için tasarım matris oluşturuldu. Bunun için test datası kullanıldı. Model predict değerleri oluşturdu ve bulduklarını vektör olarak kullandı. Modelde, Alpha'nın % 20, Ridge Regresyon Modeli'nin, % 80 katkısı olacağı görüldü.
+```{r}
+x.test.net <- model.matrix(medv ~., test)[,-1] 
+predictions.net <- model.net %>% predict(x.test.net)
+```
+Bu şekilde oluşturulan tahmin değereri model verileri ile uyuşuyor mu diye kontrol edilmesi için RMSE fonksiyonu kullanıldı.
+```{r}
+data.frame( RMSE.r = RMSE(predictions.net, test$medv), Rsquare.r = R2(predictions.net, test$medv))
