@@ -572,7 +572,7 @@ library(glmnet)
 data(Boston, package = "MASS")
 # Yukarıdaki kullanacağımız paketleri intall ettik
 #rassallık ile test ve train dataları oluşturacağız o yüzden set.seed kullandık ilk seed ayarladık.Herkeste aynı değer yazzın diye rastlege 1212 yazdı herkes. Sonra test ve eğitim datası oluşturduk.
-set.seed(1221)
+set.seed(1212)
 sample_size <- floor(0.75 * nrow(Boston)) #bu değerin yüzde 75ini alınca küsüratlı çıkıyor önden hesapladık o yüzden floor fonksiyonu ile yuvarladık tam sayı olsun diye
 training_index <- sample(seq_len(nrow(Boston)), size =sample_size)
 train <- Boston[training_index, ]
@@ -585,12 +585,86 @@ y <- train$medv
 
 #Ridge Regression
 
-cv.r <- cv.glmnet(x, y, alpha = 0) #bağımlı değişken x, bağımsız y, alfa 0
+cv.r <- cv.glmnet(x, y, alpha = 0) #bağımsız değişken x, bağımlı y, (alfa=0 demek ridge fonksiyonu demek)
 cv.r$lambda.min #lambda min değerini bulduk cross validation ile
 model.ridge <- glmnet(x, y, alpha = 0, lambda = cv.r$lambda.min) #sonra o lamdayı girdi oarak kullandık. lamdayı fonksiyona elle yazmış olduk
 coef(model.ridge) #coefficientlere baktık
 
 x.test.ridge <- model.matrix(medv ~., test)[,-1]
-predictions.ridge <- model.ridge %>% predict(x.test.ridge) %>% as.vector()  #model ridgeyi çekti, sonra burdan predict değerleri oluşturdu ve vektör olrak kullandı)
+predictions.ridge <- model.ridge %>% predict(x.test.ridge) %>% as.vector()  #test datasını kullandık. model ridgeyi çekti, sonra burdan predict değerleri oluşturdu ve bulduklarını vektör olrak kullandı)
 #tamin değereri model verileri ile uyuşuyor mu bakmak için rmse kullancdaz.
 data.frame( RMSE.r = RMSE(predictions.ridge, test$medv), Rsquare.r = R2(predictions.ridge, test$medv))
+
+#Lasso Regression
+cv.l <- cv.glmnet(x, y, alpha = 1)
+cv.l$lambda.min
+model.lasso <- glmnet(x, y, alpha = 1 , lambda = cv.l$lambda.min)
+#coef baktık
+coef(model.lasso)
+x.test.lasso <- model.matrix(medv ~., test)[,-1] 
+predictions.lasso <- model.lasso %>% predict(x.test.lasso) %>% as.vector()
+data.frame( RMSE.r = RMSE(predictions.lasso, test$medv), Rsquare.r = R2(predictions.lasso, test$medv))
+
+#Elastic Net Regression
+
+model.net <- train(
+  medv ~., data = train, method = "glmnet",
+  trControl = trainControl("cv", number = 10),
+  tuneLenght = 10)
+model.net$bestTune
+
+coef(model.net$finalModel, model.net$bestTune$lambda)
+x.test.net <- model.matrix(medv ~., test)[,-1] 
+  #alphanın yüzde 20 ridgenin yüzde 80 katkısı olcak diye bulduk
+predictions.net <- model.net %>% predict(x.test.net)
+data.frame( RMSE.r = RMSE(predictions.net, test$medv), Rsquare.r = R2(predictions.net, test$medv))
+
+#Geleneksel Model
+dataset = read.csv("Mortgage.csv")
+head(dataset) #veriye baktık
+str(dataset)
+dataset$y = as.factor(dataset$y) #integer
+
+model1 = glm(y~x1+x2, family = "binomial", data = dataset) #buradan gördüğümüz x1 c-ve x2 değerlerini kullanacağız olasılık değeri elde etmek için. Model anlamlı çıktı genel olarak hepsi 0.05ten küçük
+ll.null = model1$null.deviance/-2 #r2 değerini görmek için ll.null demek sistem en kötü haliyle tahmin yaparsa olaacak hali
+ll.proposed = model1$deviance/-2 # ll.proposed ise en iyi tahmini veren denklemin sigmoidi
+
+R2 = (ll.null - ll.proposed) / ll.null #rkare %46 çıktı
+#buraya kadar kendi modelimizi test ettik. Şimdi tahminde kullanıcaz.
+tahmin = predict(model1, type="response")
+classification = round(tahmin) #yukarladık yada a. .nin altında veya üstünde olmasına göre yuvarlandı
+AR = mean(dataset$y == classification) #doğrulama yaptık. %86 doğru %14 yanlış
+
+# Train-test datası ile model
+
+dataset = read.csv("Spam.csv")
+View(dataset)
+dataset$Spam = as.factor(dataset$Spam)
+set.seed(1453) #aynı sonuçları alalım diye setseed oluşturduk.
+trainingRowIndex = sample(1:nrow(dataset), 0.8*nrow(dataset)) #veri setinin yüzde seksenini alcak 1den nrowa kadar.indisleri
+train = dataset[trainingRowIndex,2:5] #satırları row indexten seçti 2 ve 5 arasındaki 4 kolonu aldı
+test = dataset[trainingRowIndex,2:5] 
+  #modeli kurucaz
+model2 = glm(Spam~., family="binomial", data = train)
+
+ll.null = model2$null.deviance/-2 #r2 değerini görmek için ll.null demek sistem en kötü haliyle tahmin yaparsa olaacak hali
+ll.proposed = model2$deviance/-2 # ll.proposed ise en iyi tahmini veren denklemin sigmoidi
+
+R2 = (ll.null - ll.proposed) / ll.null #rkare düşük
+
+tahmin2= predict(model2, type="response")
+classification = round(tahmin) 
+
+AR = 100*mean(test$Spam == classification)  #test içindeki spamlarle classificationlar ne kadar örtüşüyor baktık. dğru tahmin %83
+
+#k- fold CV test-train test Datası Model
+library=(caret)
+dataset = read.csv("Spam.csv")
+
+dataset = dataset [ , 2:5]
+dataset$Spam = as.factor(dataset$Spam) #datasetteki spamları faköter çevirim datasetteki spam üstüne yazcdık 
+str(dataset)
+#4-fold cv
+myControl = trainControl(method = "cv", number = 5)
+Model3 = train(Spam~., data=dataset, trControl=myControl,
+method =                
