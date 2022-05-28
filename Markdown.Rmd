@@ -385,3 +385,86 @@ predictions.net <- model.net %>% predict(x.test.net)
 Bu şekilde oluşturulan tahmin değereri model verileri ile uyuşuyor mu diye kontrol edilmesi için RMSE fonksiyonu kullanıldı.
 ```{r}
 data.frame( RMSE.r = RMSE(predictions.net, test$medv), Rsquare.r = R2(predictions.net, test$medv))
+```
+Genelleştirilmiş lineer modeller uygulandı. İlk olarak Geleneksel Model ile başlandı. Bunun için "Mortgage" veri seti ile çalışıldı. İlk etapta yüklendi ve özellikleri incelendi.
+```{r}
+dataset = read.csv("Mortgage.csv")
+head(dataset)
+str(dataset)
+```
+Sütun türü numerik yerine factor olarak tanımlandı.
+```{r}
+dataset$y = as.factor(dataset$y)
+```
+Model kuruldu. Daha sonra olasılık değerleri elde etmek için burada elde edilen x1 ve x2 değerleri kullanılmaktadır. Modelde tüm değerler <0.05 olduğu için genel olarak anlamlı olduğu söylenebilir.
+```{r}
+model1= glm(y~x1+x2, family = "binomial", data = dataset)
+summary(model1)   
+```
+R2 değerini görmek için ll.null fonksiyonu kullanıldı. Bu formül sistem en kötü haliyle tahmin yaparsa oluşacak sonuçları göstermektedir. ll.proposed fonksiyonu ise en iyi tahmini veren denklemin sigmoidini görmek için kullanıldı. R2 değeri %46 çıkmıştır, bu değer bağımlı değişkenin ne kadar varyasyonunun bir regresyon modelindeki bağımsız değişkenler tarafından açıklandığını göstermektedir. Sonrasında null ve residual deviance kullanılarak Akaike hesaplanacaktır.
+```{r}
+ll.null = model1$null.deviance/-2
+ll.proposed = model1$deviance/-2
+R2 = (ll.null - ll.proposed) / ll.null
+```
+Buraya kadar yapılan işlemlerde oluşturulan model test edilmiş oldu. Buradan sonrasında model tahminlemede kullanılacaktır. Round fonksiyonu ile tahmin değerleri %50'nin altında veya üstünde olma durumuna göre 0 veya 1'e yuvarlanmıştır.
+```{r}
+tahmin = predict(model1, type="response")
+classification = round(tahmin) 
+```
+AR fonksiyonu ile doğrulama yapıldı. Modelin %86 doğru, %14 yanlış tahmin yaptığı görüldü.
+```{r}
+AR = mean(dataset$y == classification)
+AR = 100*mean(dataset$y == classification) 
+```
+İkinci olarak train test datası ile model oluşturuldu. Bunun için "Spam" veri seti çağırıldı ve özelliklerine bakıldı. Spam bağımlı değişken olarak kullanıldı. Sütun türü numerik yerine factor olarak tanımlandı. Herkesin aynı sonuçları alması için seed oluşturuldu.
+```{r}
+veriseti = read.csv("Spam.csv")
+veriseti$Spam = as.factor(veriseti$Spam)
+str(veriseti)
+set.seed(1453)
+```
+Nrow satır sayısını ifade etmektedir. Veri setinin yüzde seksenini alcak 1den nrowa kadar indisler oluşturuldu. Test ve eğitim verileri hazırlandı.
+```{r}
+trainingRowIndex = sample(1:nrow(veriseti), 0.8*nrow(veriseti)) #nrow satır sayısı
+train = veriseti[trainingRowIndex,2:5]  #record almadık
+test = veriseti[-trainingRowIndex,2:5]
+```
+Sonraki aşamada model kuruldu. ll.null fonksiyonu kullanıldı. Bu formül sistem en kötü haliyle tahmin yaparsa oluşacak sonuçları göstermektedir. ll.proposed fonksiyonu ise en iyi tahmini veren denklemin sigmoidini görmek için kullanıldı.
+```{r}
+model2 = glm(Spam~., family="binomial", data = train)
+
+ll.null = model2$null.deviance/-2
+ll.proposed = model2$deviance/-2
+```
+R2 değeri hesaplandı. %30 olarak bulundu. Bu değer bağımlı değişkenin ne kadar varyasyonunun bir regresyon modelindeki bağımsız değişkenler tarafından açıklandığını göstermektedir.
+```{r}
+R2 = (ll.null - ll.proposed) / ll.null  #modelin R2'si %30
+```
+Buraya kadar yapılan işlemlerde oluşturulan model test edilmiş oldu. Buradan sonrasında model tahminlemede kullanılacaktır. Round fonksiyonu ile tahmin değerleri %50'nin altında veya üstünde olma durumuna göre 0 veya 1'e yuvarlanmıştır.
+```{r}
+tahmin2 = predict(model2, test, type="response")
+classification = round(tahmin2)
+```
+AR fonksiyonu ile doğrulama yapıldı. Test içindeki spamlarle classificationlar ne kadar örtüştüğüne bakıldı. Doğru tahmin yüzdesi %83 olarak bulundu.
+```{r}
+AR = 100*mean(test$Spam == classification)  #%83
+```
+Üçüncü ve son olarak K-fold cv train-test yöntemi kullanıldı. Bunun için "caret" paketi çağırıldı. Kullanılacak olan 2 ve 5 arasındaki kolanlar çağırıldı.
+```{r}
+library(caret)
+veriseti = read.csv("Spam.csv")
+veriseti = veriseti[ , 2:5]
+```
+Sütun türü numerik yerine factor olarak tanımlandı. Herkesin aynı sonuçları alması için seed oluşturuldu.
+```{r}
+veriseti$Spam = as.factor(veriseti$Spam)
+str(veriseti)
+```
+Veri seti 5 parçaya bölündü ve model oluşturuldu.
+```{r}
+myControl = trainControl(method = "cv", number = 5)
+
+model3 = train(Spam~., data=veriseti, trcontrol=myControl,
+              method = "glm", family=binomial,
+              metric = "Accuracy")
