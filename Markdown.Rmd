@@ -8,14 +8,14 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-çalışacağımız verisetinin içeri aktarılması için `read.csv`` fonksiyonu kullanılır. 
-içeri aktarcağımız lokal dosya yolu yada uzak sunucuda tutulan dosyanın yolu fonksiyona girdi olarak verilir. 
+Çalışılacak veri setinin içeri aktarılması için `read.csv`` fonksiyonu kullanılmaktadır. 
+İçeri aktarılacak lokal dosya yolu ya da uzak sunucuda tutulan dosyanın yolu fonksiyona girdi olarak verilir. 
 
 ```{r}
 veriseti <- read.csv("fin500.csv")
 ```
 
-veriseti yüklendikten sonra veriseti içeriğini kontrol etmek üzere `head()` ve `tail()` fonksiyonları kullanılır
+veriseti yüklendikten sonra veriseti içeriğini kontrol etmek üzere `head()` ve `tail()` fonksiyonları kullanılmaktadır.
 
 
 ```{r}
@@ -23,14 +23,13 @@ head(veriseti,15)
 
 tail(veriseti,2) 
 ```
-verisetinde yer alan dataların yapısını görmek için str fonksiyonu kullanılır
+verisetinde yer alan dataların yapısını görmek için str fonksiyonu kullanılır.
 
 ```{r}
 str(veriseti) 
 ```
 
-Veriseti içindeki tek bir stünün okunması için veriseti$xx komutu kullanılır. Örnek olarak Industry stünunun görüntülenmesi için 
-
+Veriseti içindeki tek bir stünün okunması için (örnek olarak Industry stünunun görüntülenmesi için) veriseti$xx komutu kullanılır. 
 ```{r}
 veriseti$Industry
 ```
@@ -83,18 +82,18 @@ alttaki scale formülü
 $$  
 \frac{X{i}}{\sigma{x}}
 $$
-Yeni veri seti ile çalışmaya başladık
-Matematiksel işlemler ile çalışacağımızdan dolayı `caret` paketini yükledik. Daha sonra R'da yerleşik veri kümesi olan `iris` veri kümesini çağırdık ve `iris` veri kümesinin yapısını ve özetini ortaya koyduk.
+Yeni veri seti ile çalışmaya başlanıldı.
+Matematiksel işlemler ile çalışılacağından dolayı `caret` paketini yüklendi. Daha sonra R'da yerleşik veri kümesi olan `iris` veri kümesi çağırıldı ve `iris` veri kümesinin yapısı ve özeti ortaya koyuldu.
 ```{r}
 library(caret)
 data(iris)
 str(iris)
 ```
-#verisetindeki tüm satırlar ile 1. ve 4. sütunlar arasını aldık. Eğer 1. 3. ve 5. sütunları almak isteseydik C(1,3,5) komutunu uygulamamız gerekecekti.
+Verisetindeki tüm satırlar ile 1. ve 4. sütunlar arasını alındı. Eğer 1. 3. ve 5. sütunları alınmak istenseydi C(1,3,5) komutunun uygulanması gerekecekti.
 ```{r}
 summary(iris[,1:4])
 ```
-Verisetimizde uygulayacağımız dönüşümler (matematiksel işlemler) için `preProcess` komutunu kullandık ve `preProcess` altındaki `scale` paketini çağırdık. Scale fonksiyonu her bir gözlemi o serinin standart sapmasına göre oranlamaktadır.
+Verisetinde uygulanacak dönüşümler (matematiksel işlemler) için `preProcess` komutu kullanıldı ve `preProcess` altındaki `scale` paketi çağırıldı. Scale fonksiyonu her bir gözlemi o serinin standart sapmasına göre oranlamaktadır.
 ```{r}
 preProcessParams <- preProcess(iris[,1:4], method=c("scale"))
 print(preProcessParams)
@@ -102,12 +101,12 @@ print(preProcessParams)
 $$
 \frac{x_(i)}{\sigma_(x)}
 $$
-İşlemleri belirli veri kümelerine uygulamak için `predict` komutunu kullandık. Sonrasında veri setini görmek için summary fonksiyonu kullandık.
+İşlemleri belirli veri kümelerine uygulamak için `predict` komutu kullanıldı. Sonrasında veri setini görmek için summary fonksiyonu kullanıldı.
 ```{r}
 scaled <- predict(preProcessParams, iris[,1:4]) #predict fonksiyonunu dönüştürerek iris 1:4 e yazdırdık.
 summary(scaled)
 ```
-`preProcess` altındaki `scale` paketini çağırdık ve dönüşüm yaparak yazdırdık. Center fonksiyonu her bir değişkenin ortalamalarından çıkartılmış halini vermektedir.
+`preProcess` altındaki `scale` paketi çağırıldı ve dönüşüm yaparak yazdırıldı. Center fonksiyonu her bir değişkenin ortalamalarından çıkartılmış halini vermektedir.
 
 ```{r}
 preProcessParams <- preProcess(iris[,1:4], method=c("center")) #xi-xmü yaptık
@@ -178,29 +177,29 @@ log\left (y+1  \right ), & if \lambda = 0, y\geq 0 \\
 
 -log\left (-y+1  \right ), & if \lambda = 2, y< 0\end{matrix}\right.
 $$
-Resampling yani yeniden örnekleme yapacağız. Bunun için Caret Package yükledik ve verimizi çağırdık.
+Resampling yani yeniden örnekleme yapılacak. Bunun için Caret Package yüklendi ve veriler çağırıldı.
 ```{r}
 library(caret) #load caret package
 data(iris) #Load the dataset
 ```
-Bunun için Boolstrap yöntemi kullandık ve verilerden yeniden 100 verilik örneklem oluştuduk.
+Bunun için Boolstrap yöntemi kullanıldı ve verilerden yeniden 100 verilik örneklem oluşturuldu.
 ```{r}
 train_control <- trainControl(method="boot", number = 100)
 ```
-Veri setinde %80/%20 eğitim/test bölünmesini tanımladık
+Veri setinde %80/%20 eğitim/test bölünmesi tanımlandı.
 ```{r}
 split=0.80
 trainIndex <- createDataPartition(iris$Species, p=split, list=FALSE)
 ```
-80/20 olarak böldüğümüz verinin 80lik kısımını yani eğitim datasını çağırdık. 5 fold oluştuğunu gördük.  Veriyi her taraftan inceleyerek en uygun test datası nerden elde edilir onu hesaplamaya çalıştık.
+80/20 olarak bölünen verinin 80lik kısmı yani eğitim datası çağırıldı. 5 fold oluştuğunu görüldü.  Veri her açıdan incelenerek en uygun test datasının nerden elde edileceği hesaplanmaya çalışıldı.
 ```{r}
 data_train <- iris[trainIndex,]
 ```
-20'lik kısmı görmek için ise formülde başına eksi koyduk. 
+20'lik kısmı görmek için ise formülde başa eksi (-) koyuldu. 
 ```{r}
 data_test <- iris[-trainIndex,]
 ```
-Çapraz doğrulama yaptık. One Out modelini seçtik. Bu bir model doğrulama tekniğidir. Eğittiğimiz modelin amacı doğrultusunda ne kadar düzgün şekilde ilerlediğini, hatalar olup olmadığını, kontrol etmek için kullanılır. Eğitim kontrolünü tanımlattık..
+Çapraz doğrulama yapıldı. One Out modeli seçildi. Bu bir model doğrulama tekniğidir. Eğitilen modelin amacı doğrultusunda ne kadar düzgün şekilde ilerlediğini, hatalar olup olmadığını, kontrol etmek için kullanılır. Eğitim kontrolü tanımlatıldı.
 ```{r}
 # Leave One Out Cross Validation (LOOCV)
 library(caret)
@@ -210,7 +209,7 @@ data(iris)
 train_control <- trainControl(method="LOOCV")
 ```
 
-Ayrıca bir de K-Fold Cross Validation uyguladık. Bu yöntem de sınıflandırma modellerinin değerlendirilmesi ve modelin eğitilmesi için veri setini parçalara ayırma yöntemlerinden biridir. Burada 10 fold oluşturduk.
+Ayrıca bir de K-Fold Cross Validation uygulandı. Bu yöntem de sınıflandırma modellerinin değerlendirilmesi ve modelin eğitilmesi için veri setini parçalara ayırma yöntemlerinden biridir. Burada 10 fold oluşturuldu.
 ```{r}
 #load the library
 library(caret)
@@ -220,48 +219,48 @@ data(iris)
 #k fold number => number
 train_control <- trainControl(method="cv", number=10)
 ```
-Lineer regresyon uygulaması yapmaya başladık. Regresyonu R programında tanımlı 'cars' paketi üzerinden uygulamak için veriyi çağırdık ve veriyi inceledik.
+Lineer regresyon uygulaması yapılmaya başlandı. Regresyonu R programında tanımlı 'cars' paketi üzerinden uygulamak için veri çağırıldı ve veri incelendi.
 ```{r}
 head(cars)
 str(cars)
 summary(cars)
 ```
-Verideki kolon isimlerine bakmak için 'names' fonksiyonunu kullandık. Bu fonksiyon Veri setindeki 'header'ları gösterir.
+Verideki kolon isimlerine bakmak için 'names' fonksiyonu kullanılır. Bu fonksiyon Veri setindeki 'header'ları gösterir.
 ```{r}
 names(cars)
 ```
-Verilerin regresyon modeli kurmaya uygun olup olmadığını kontrol etmek için saçılma diyagramı çizdirdik. Aynı şekilde bu amaçla değişkenler arasındaki korelasyona baktık.
+Verilerin regresyon modeli kurmaya uygun olup olmadığını kontrol etmek için saçılma diyagramı çizdirildi. Aynı şekilde bu amaçla değişkenler arasındaki korelasyona bakıldı.
 ```{r}
 scatter.smooth(x=cars$speed, y=cars$dist, main="Saçılma Diyagramı")
 cor(cars$speed, cars$dist)
 ```
-Veri üzerinde lm fonksiyonu ile lineer regresyon modeli kurduk. Bu modelde distance bağımlı değişkenken speed bağımsız değişken olarak yer aldı. Daha sonra bu modeli yazdırdık ve özetine baktık.
+Veri üzerinde lm fonksiyonu ile lineer regresyon modeli kuruldu. Bu modelde distance bağımlı değişkenken speed bağımsız değişken olarak yer aldı. Daha sonra bu model yazdırıldı ve özetine bakıldı.
 ```{r}
 GenelModel <- lm(dist ~ speed, data=cars)
 print(GenelModel)
 summary(GenelModel)
 ```
-Akaike Bilgi Kriteri ve Bayesian Bilgi Kriteri değerine baktık.AIC herhangi bir tahmini istatistiksel modelin uygunluğunun bir ölçüsü olarak adlandırılmaktadır.BIC ise farklı parametre sayılarına sahip parametrik modeller sınıfı arasında bir model seçimi türüdür. Bu iki değerin de küçük olması istenmektedir.
+Akaike Bilgi Kriteri ve Bayesian Bilgi Kriteri değerine bakıldı.AIC herhangi bir tahmini istatistiksel modelin uygunluğunun bir ölçüsü olarak adlandırılmaktadır.BIC ise farklı parametre sayılarına sahip parametrik modeller sınıfı arasında bir model seçimi türüdür. Bu iki değerin de küçük olması istenmektedir.
 
 ```{r}
 AIC(GenelModel)
 BIC(GenelModel)
 ```
-Makine öğrenmesi bu bölüm ve sonrasında uygulanmıştır. Rastgele örnekleme sonuçlarını çoğaltmak için seed(tohum) ayarladık. Hepimiz aynı rassal sayıları bulmak için değer olarak 100 yazdık. Daha sonra verilerin %80'i ile 1'den n'e kadar index değerleri ürettik.
+Makine öğrenmesi bu bölüm ve sonrasında uygulanmıştır. Rastgele örnekleme sonuçlarını çoğaltmak için seed(tohum) ayarlandı. Herkes aynı rassal sayıları bulmak için değer olarak 100 yazdı. Daha sonra verilerin %80'i ile 1'den n'e kadar index değerleri üretilmiş oldu.
 ```{r}
 set.seed(100)
 trainingRowIndex <- sample(1:nrow(cars), 0.8*nrow(cars))
 ```
-Veri setini bölerek eğitim ve test verisi olarak parçaladık. Model eğitim verisini ve test verisini oluşturduk. Test verisi oluşturuken formülasyonda başa '-' işareti ekledik.
+Veri setini bölerek eğitim ve test verisi olarak parçalandı. Model eğitim verisi ve test verisi oluşturuldu. Test verisi oluşturuken formülasyonda başa '-' işareti eklendi.
 ```{r}
 trainingData <- cars[trainingRowIndex, ] 
 View(trainingData)
 testData <- cars[-trainingRowIndex, ] 
 View(testData)
 ```
-Eğitim verisi üzerinden yeniden model kurduk. Modelde distance bağımlı değişken, speed bağımsız değişken olarak yer aldı.
-lmmod fonksiyonunu kullandık. Bu fonksiyonu kullanarak model test verisindeki 'speed' değişkenlerini modele koyarak 'distance' değişkenlerini tahmnin etmekte. Bu tahmin edilen verileri distPred olarak adlandırdık.
-Oluşan verilerin özetine baktık ancak çok anlamlı olmadığını gördük. Ardından yine Akaike Bilgi Kriteri değerini kontrol ettik. Değerin biraz kötülerştiğini gördük.
+Eğitim verisi üzerinden yeniden model kuruldu. Modelde distance bağımlı değişken, speed bağımsız değişken olarak yer aldı.
+lmmod fonksiyonu kullanıldı. Bu fonksiyon kullanılarak model test verisindeki 'speed' değişkenleri modele koyularak 'distance' değişkenlerini tahmin etmekte. Bu tahmin edilen veriler distPred olarak adlandırıldı.
+Oluşan verilerin özetine bakıldı ancak çok anlamlı olmadığı görüldü. Ardından Akaike Bilgi Kriteri değeri kontrol edildi. Değerin biraz kötüleştiği görüldü.
 ```{r}
 lmMod <- lm(dist ~ speed, data=trainingData)
 distPred <- predict(lmMod, testData)
@@ -269,8 +268,8 @@ print(distPred)
 summary(lmMod)
 AIC(lmMod)
 ```
-Gerçekleşen verileri ve model ile tahmin edilen verileri net görebilmek için yanyana yazdırdık.
-Gerçekleşen veriler ile tahmin edilen verilerin ne kadar örtüştüğünü görmek amacıyla korelasyonlarına baktık.
+Gerçekleşen veriler ile modelle tahmin edilen verilerin net görebilmesi için yanyana yazdırıldı.
+Gerçekleşen veriler ile tahmin edilen verilerin ne kadar örtüştüğünün görülmesi amacıyla korelasyonlarına bakıldı.
 ```{r}
 actuals_preds <- data.frame(cbind(gercek=testData$dist, tahmin=distPred))
 correlation_accuracy <- cor(actuals_preds)
@@ -278,16 +277,16 @@ print(correlation_accuracy)
 head(actuals_preds)
 ```
 #min_max_accuracy <- mean(apply(actuals_preds), 1, min) / apply(actuals_preds, 1, max)) 
-MAPE yani mean absolute percentage error değerine baktık. Bu değer ortalama hata bir makine öğrenmesi modelinin öngördüğü tahmin değerleri ile gerçek değerlerin arasındaki ortalama hatadır.
-Yazdırarak modelin %50 hata yapmış olduğunu gördük
+MAPE yani mean absolute percentage error değerine bakıldı. Bu değer ortalama hata bir makine öğrenmesi modelinin öngördüğü tahmin değerleri ile gerçek değerlerin arasındaki ortalama hatadır.
+Yazdırarak modelin %50 hata yapmış olduğu görüldü.
 ```{r}
 mape <- mean(abs((actuals_preds$tahmin - actuals_preds$gercek))/actuals_preds$gercek)
 print(mape)
 ```
 Modelde makine öğrenmesi kısmı asıl burada başladı.
-Bunun için kütüphanden DAAG paketini yükledik.
-CVlm (cross validation lm) fonksiyonu DAAG paketi yüklenince gelmektedir. Burada form formülasyonu linear modeln formülasyonunu, m ise modelin oluşturmasını istediğimiz küme sayısını belirtmektedir. Burada  yazarak Veri setini 5 parçaya böldürmüş ve 5 ayrı regresyon modeli oluşturmuş olduk. Bu 5 parça içerisinde test verisi sürekli değişti. Bu sayede makine öğrenmesi yapmış olduk.
-Daha sonra MSE yani mean squarred error (ortalama hata karesi) değerine baktık.Bu hata bir tahmincinin ortalama karesi alınmış hatası veya ortalama karesi alınmış sapma, hataların karelerinin ortalamasını, yani tahmin edilen değerler ile gerçek değer arasındaki ortalama karesi alınmış farkı ölçmektedir.
+Bunun için kütüphanden DAAG paketini yüklendi.
+CVlm (cross validation lm) fonksiyonu DAAG paketi yüklenince gelmektedir. Burada form formülasyonu linear modelin formülasyonunu, m ise modelin oluşturması istenilen küme sayısını belirtmektedir. Veri seti 5 parçaya böldürülmüş ve 5 ayrı regresyon modeli oluşturlmuş oldu. Bu 5 parça içerisinde test verisi sürekli değişti. Bu sayede makine öğrenmesi yapılmış oldu.
+Daha sonra MSE yani mean squarred error (ortalama hata karesi) değerine bakıldı.Bu hata bir tahmincinin ortalama karesi alınmış hatası veya ortalama karesi alınmış sapma, hataların karelerinin ortalamasını, yani tahmin edilen değerler ile gerçek değer arasındaki ortalama karesi alınmış farkı ölçmektedir.
 ```{r}
 library(DAAG)
 cvResults <- suppressWarnings(CVlm(cars, form.lm = dist ~speed, m=5, dots = FALSE, seed=29, legend.pos ="topleft", printit = FALSE, main="CV Dogrusal Regresyon"));
